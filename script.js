@@ -2,11 +2,11 @@ import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'dat.gui'
+import { BufferAttribute } from 'three'
 
-// Loading
-const textureLoader = new THREE.TextureLoader()
-
-const normalTexture = textureLoader.load('/textures/NormalMap1.png')
+//texture
+const loader = new THREE.TextureLoader()
+const cross = loader.load('./stars-png-634.png')
 
 // Debug
 const gui = new dat.GUI()
@@ -18,67 +18,41 @@ const canvas = document.querySelector('canvas.webgl')
 const scene = new THREE.Scene()
 
 // Objects
-const geometry = new THREE.SphereBufferGeometry(.5,64,64);
+const geometry = new THREE.SphereBufferGeometry(.5,32,32);
+const particles = new THREE.BufferGeometry;
+const particlescnt = 5000;
+const pararray = new Float32Array(particlescnt*3);
+
+for (let i=0;i<particlescnt*3;i++){
+    pararray[i] = (Math.random()-0.5)*(5*Math.random())
+}
+
+particles.setAttribute('position',new THREE.BufferAttribute(pararray,3))
 
 // Materials
 
-const material = new THREE.MeshStandardMaterial()
-material.metalness = 0.7
-material.roughness = 0.2
-material.normalMap = normalTexture;
-material.color = new THREE.Color(0xff0000)
+const material = new THREE.PointsMaterial({
+    size:0.001,
+})
 
+const particlesmaterial = new THREE.PointsMaterial({
+    size:0.02,
+    map:cross,
+    transparent:true,
+})
 // Mesh
-const sphere = new THREE.Mesh(geometry,material)
-scene.add(sphere)
+const sphere = new THREE.Points(geometry,material)
+const particle = new THREE.Points(particles,particlesmaterial)
+scene.add(sphere,particle)
 
-// Light 1
+// Lights
 
-const pointLight2 = new THREE.PointLight(0xff0000, 2)
-
-pointLight2.position.set(-1.86,1,-1.65)
-pointLight2.intensity = 10
-scene.add(pointLight2)
-
-gui.add(pointLight2.position,'x').min(-6).max(6).step(0.01)
-gui.add(pointLight2.position,'y').min(-3).max(3).step(0.01)
-gui.add(pointLight2.position,'z').min(-3).max(3).step(0.01)
-
-gui.add(pointLight2,'intensity').min(0).max(10).step(0.01)
-
-// const pointLightHelper = new THREE.PointLightHelper(pointLight2,1)
-// scene.add(pointLightHelper)
-
-//Light 2
-const pointLight3 = new THREE.PointLight(0x96ff, 2)
-
-pointLight3.position.set(1.51,-2.75,-2.43)
-pointLight3.intensity = 10
-scene.add(pointLight3)
-
-gui.add(pointLight3.position,'x').min(-6).max(6).step(0.01)
-gui.add(pointLight3.position,'y').min(-3).max(3).step(0.01)
-gui.add(pointLight3.position,'z').min(-3).max(3).step(0.01)
-
-gui.add(pointLight3,'intensity').min(0).max(10).step(0.01)
-
-// const pointLightHelper2 = new THREE.PointLightHelper(pointLight3,1)
-// scene.add(pointLightHelper2)
-//Light 3
 const pointLight = new THREE.PointLight(0xffffff, 0.1)
-
-pointLight.position.set(1.39,0.95,-2.5)
-pointLight.intensity = 0.95
+pointLight.position.x = 2
+pointLight.position.y = 3
+pointLight.position.z = 4
 scene.add(pointLight)
 
-gui.add(pointLight.position,'x').min(-6).max(6).step(0.01)
-gui.add(pointLight.position,'y').min(-3).max(3).step(0.01)
-gui.add(pointLight.position,'z').min(-5).max(3).step(0.01)
-
-gui.add(pointLight,'intensity').min(0).max(10).step(0.01)
-
-// const pointLightHelper3 = new THREE.PointLightHelper(pointLight,1)
-// scene.add(pointLightHelper3)
 /**
  * Sizes
  */
@@ -120,17 +94,26 @@ scene.add(camera)
  * Renderer
  */
 const renderer = new THREE.WebGLRenderer({
-    canvas: canvas,
-    alpha: true
+    canvas: canvas
 })
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+//mouse
 
+document.addEventListener('mousemove',animatemouse)
+let mouseX=0
+let mouseY=0
+
+function animatemouse(event){
+    mouseX = event.clientX
+    mouseY = event.clientY
+}
 /**
  * Animate
  */
 
 const clock = new THREE.Clock()
+
 
 const tick = () =>
 {
@@ -138,7 +121,12 @@ const tick = () =>
     const elapsedTime = clock.getElapsedTime()
 
     // Update objects
+    sphere.rotation.z = .5 * elapsedTime
+    sphere.rotation.x = .5 * elapsedTime
     sphere.rotation.y = .5 * elapsedTime
+
+    particle.rotation.y = mouseX * (elapsedTime*0.000008)
+    particle.rotation.x = mouseY * (elapsedTime*0.000008)
 
     // Update Orbital Controls
     // controls.update()
